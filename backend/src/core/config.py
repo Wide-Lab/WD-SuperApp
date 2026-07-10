@@ -19,6 +19,10 @@ class Config(BaseSettings):
     AUTH_TOKEN_TTL_SECONDS: int = 604800
     AUTH_COOKIE_DOMAIN: str = ".widelab.com.br"
 
+    AUTH_DEFAULT_USER_EMAIL: str = ""
+    AUTH_DEFAULT_USER_NAME: str = ""
+    AUTH_DEFAULT_USER_PASSWORD: str = ""
+
 
 @lru_cache(maxsize=1)
 def get_config() -> Config:
