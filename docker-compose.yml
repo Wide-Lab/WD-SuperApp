@@ -1,0 +1,63 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-central}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - db-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-central}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    container_name: central-widelab-backend
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - db-internal
+      - edge
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: central-widelab-frontend
+    networks:
+      - edge
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: central-widelab
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8105:80"
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - edge
+    restart: unless-stopped
+
+networks:
+  edge:
+  db-internal:
+    internal: true
+
+volumes:
+  db-data:

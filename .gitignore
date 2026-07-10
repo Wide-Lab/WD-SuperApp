@@ -6,5 +6,8 @@
 .DS_Store
 Thumbs.db
 
+# Credenciais do docker-compose (raiz) — o par versionado é o .env.example.
+/.env
+
 # As dependências e os artefatos de build do frontend ficam em frontend/.gitignore,
 # ao lado do que eles ignoram.
