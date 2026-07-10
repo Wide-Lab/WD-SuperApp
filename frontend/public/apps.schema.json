@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://widelab.com.br/schemas/apps.schema.json",
+  "title": "Catálogo de aplicações Widelab",
+  "description": "Lista as aplicações exibidas na central. A ordem do array é a ordem da tela.",
+  "type": "object",
+  "required": ["apps"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Caminho deste schema. Mantenha para ter autocomplete no editor."
+    },
+    "apps": {
+      "type": "array",
+      "description": "As aplicações, na ordem em que aparecem no grid.",
+      "items": { "$ref": "#/$defs/application" }
+    }
+  },
+  "$defs": {
+    "application": {
+      "type": "object",
+      "required": ["id", "name", "description", "url", "icon"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Identificador único em kebab-case. Define a coordenada fixa do card na bancada."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "description": "Nome exibido no card."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "description": "Uma frase sobre o que a aplicação faz. Truncada em 2 linhas no card."
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1,
+          "description": "URL absoluta (abre em nova aba) ou caminho relativo (abre na mesma aba)."
+        },
+        "icon": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Nome de um ícone Lucide em kebab-case. Ex.: calendar-clock, search, bot."
+        },
+        "image": {
+          "type": "string",
+          "description": "Opcional. Capa 16:10, mínimo 640x400, servida de /apps/. Sem ela, o card usa o leito do plotter."
+        }
+      }
+    }
+  }
+}

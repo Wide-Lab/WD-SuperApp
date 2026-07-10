@@ -1,0 +1,10 @@
+# Configuração local do Claude Code: permissões e preferências de cada máquina.
+# As specs em .claude/specs/ são versionadas — elas são o contrato do projeto.
+.claude/settings.local.json
+
+# Lixo de sistema operacional.
+.DS_Store
+Thumbs.db
+
+# As dependências e os artefatos de build do frontend ficam em frontend/.gitignore,
+# ao lado do que eles ignoram.

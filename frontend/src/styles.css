@@ -1,0 +1,198 @@
+@import 'tailwindcss';
+
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
+@import '@fontsource-variable/bricolage-grotesque';
+
+@theme {
+  --color-ink: #0c0e12;
+  --color-panel: #14171e;
+  --color-panel-hover: #171b23;
+  --color-line: #232833;
+  --color-mute: #8a90a0;
+  --color-paper: #e8eaf0;
+  --color-pink: #ed1d54;
+  --color-pink-soft: #ff7a9c;
+
+  --font-display:
+    'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, monospace;
+
+  --radius-card: 10px;
+  --radius-media: 6px;
+  --radius-field: 6px;
+
+  --ease-plotter: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Foco. Nenhum `outline: none` sem substituto.
+ * O anel usa `pink` puro: é linha, não texto, e obedece ao limiar de 3:1 de
+ * componentes de interface. O outline já acompanha o `border-radius` de cada
+ * elemento, então a curva do anel sai do próprio componente.
+ */
+:focus-visible {
+  outline: 2px solid var(--color-pink);
+  outline-offset: 2px;
+}
+
+/* O amarelo padrão do navegador destruiria a paleta. */
+mark {
+  background: transparent;
+  color: inherit;
+}
+
+/* O campo tem botão de limpar próprio; o nativo do webkit sobraria. */
+input[type='search']::-webkit-search-cancel-button,
+input[type='search']::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/*
+ * Movimento 1 — entrada do grid.
+ * Sobe 8px e aparece. `backwards` segura o estado inicial durante o atraso, para
+ * o card não piscar visível antes da própria animação começar. O estado final é
+ * o estilo base, então remover o atributo depois da montagem não desfaz nada.
+ */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+[data-enter] {
+  animation: card-enter 220ms var(--ease-plotter) backwards;
+  animation-delay: var(--enter-delay, 0ms);
+}
+
+/*
+ * O leito do plotter: papel milimetrado sob o ícone.
+ * `container-type: inline-size` existe para a varredura poder atravessar a
+ * largura do leito com `100cqw` — um `translateX(100%)` mediria o 1px da própria
+ * linha, não o papel embaixo dela.
+ */
+.plot-bed {
+  position: relative;
+  overflow: hidden;
+  container-type: inline-size;
+  background-color: #0f1219;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+/*
+ * A coordenada: uma cruz de 1px, 9px de braço, no lugar fixo daquele app.
+ * Desenhada em CSS, e não com utilidade de fundo, porque o rosa aqui é linha —
+ * nunca superfície. Ver a regra do acento na spec 02.
+ */
+.plot-cross {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.plot-cross::before,
+.plot-cross::after {
+  content: '';
+  position: absolute;
+  background: var(--color-pink);
+}
+
+.plot-cross::before {
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+.plot-cross::after {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+}
+
+/*
+ * Movimento 2 — a varredura.
+ * O cabeçote atravessa o papel da esquerda para a direita, uma vez por hover.
+ */
+.plot-bed::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -8px;
+  width: 1px;
+  opacity: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    #ed1d54 20%,
+    #ed1d54 80%,
+    transparent
+  );
+  box-shadow: 0 0 12px 1px rgba(237, 29, 84, 0.5);
+}
+
+.group:hover .plot-bed::after,
+.group:focus-visible .plot-bed::after {
+  animation: plot-scan 520ms var(--ease-plotter);
+}
+
+@keyframes plot-scan {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(calc(100cqw + 16px));
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* A varredura some inteira. O card ainda muda de cor: isso não é movimento. */
+  .plot-bed::after {
+    display: none;
+  }
+
+  .open-label {
+    transform: none !important;
+  }
+}
