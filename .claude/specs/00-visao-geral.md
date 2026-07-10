@@ -57,8 +57,11 @@ runtime e acompanhado de um JSON Schema irmão que dá autocomplete no editor.
 **Tema escuro, sem alternância.** `#0C0E12` é quase preto: a paleta já pede uma interface
 escura, e `#ED1D54` rende muito mais sobre ela.
 
-**A única funcionalidade além do grid é a busca.** Nada de categoria, status, destaque
-ou ordenação. Cada um desses campos ganha uma spec própria no dia em que fizer falta.
+**A única funcionalidade além do grid é a busca — e, desde `frontend/06-detalhe-da-aplicacao.md`, o detalhe do card.** Nada de categoria, status,
+destaque ou ordenação: continuam fora de escopo, e cada um ganha uma spec própria no dia
+em que fizer falta. O detalhe é diferente — não adiciona campo nenhum ao catálogo, só
+mostra sem os cortes de espaço do grid o que o `apps.json` já tinha (descrição inteira,
+imagem sem recorte, destino do link).
 
 **Direção visual: "bancada".** A Widelab constrói ferramentas que *rodam* — agendadores,
 RPAs, leitores de documento. A central é o índice de uma bancada de laboratório, não uma
@@ -103,6 +106,7 @@ Implementáveis nesta ordem. Cada uma declara suas dependências.
 3. [`frontend/03-catalogo-de-aplicacoes.md`](frontend/03-catalogo-de-aplicacoes.md) — `apps.json`, schema, camada de dados.
 4. [`frontend/04-vitrine.md`](frontend/04-vitrine.md) — shell, grid, card, estados.
 5. [`frontend/05-busca.md`](frontend/05-busca.md) — filtro, `?q=`, destaque, acessibilidade.
+6. [`frontend/06-detalhe-da-aplicacao.md`](frontend/06-detalhe-da-aplicacao.md) — botão de expandir, `<dialog>` de detalhe.
 
 Backend (fases 2 e 3):
 

@@ -1,5 +1,9 @@
+import { Maximize2 } from 'lucide-react'
+import { useRef } from 'react'
 import { ApplicationCardMedia } from './application-card-media'
+import { ApplicationDetailDialog } from './application-detail-dialog'
 import { HighlightedText } from './highlighted-text'
+import { Button } from '#/components/ui/button'
 import type { Application } from '../types'
 
 const ABSOLUTE_URL = /^https?:\/\//
@@ -14,29 +18,50 @@ interface ApplicationCardProps {
  * copiar endereço, navegação por Tab e leitura correta por leitor de tela.
  *
  * A central é um lançador: ela continua aberta atrás do app.
+ *
+ * O botão de detalhe é irmão da âncora, não filho — `<button>` dentro de `<a>` é
+ * aninhamento inválido. Fica visível por padrão (não só no hover) porque em touch
+ * não existe hover: se ele sumisse até o toque, ninguém o acharia.
  */
 export function ApplicationCard({ app, query }: ApplicationCardProps) {
   const isAbsolute = ABSOLUTE_URL.test(app.url)
+  const dialogRef = useRef<HTMLDialogElement>(null)
 
   return (
-    <a
-      href={app.url}
-      target={isAbsolute ? '_blank' : undefined}
-      rel={isAbsolute ? 'noopener noreferrer' : undefined}
-      className="group block h-full rounded-card border border-line bg-panel p-2.5 transition-colors duration-200 ease-plotter hover:border-[rgba(237,29,84,0.45)] hover:bg-panel-hover focus-visible:border-[rgba(237,29,84,0.45)] focus-visible:bg-panel-hover"
-    >
-      <ApplicationCardMedia app={app} />
+    <div className="relative h-full">
+      <a
+        href={app.url}
+        target={isAbsolute ? '_blank' : undefined}
+        rel={isAbsolute ? 'noopener noreferrer' : undefined}
+        className="group block h-full rounded-card border border-line bg-panel p-2.5 transition-colors duration-200 ease-plotter hover:border-[rgba(237,29,84,0.45)] hover:bg-panel-hover focus-visible:border-[rgba(237,29,84,0.45)] focus-visible:bg-panel-hover"
+      >
+        <ApplicationCardMedia app={app} />
 
-      <div className="px-1 pt-3 pb-1">
-        <h3 className="text-base leading-[1.3] font-medium tracking-[-0.005em] text-paper transition-colors duration-200 ease-plotter group-hover:text-white group-focus-visible:text-white">
-          <HighlightedText text={app.name} query={query} />
-        </h3>
-        <p className="mt-1.5 line-clamp-2 text-sm leading-[1.5] text-mute">
-          <HighlightedText text={app.description} query={query} />
-        </p>
-      </div>
+        <div className="px-1 pt-3 pb-1">
+          <h3 className="text-base leading-[1.3] font-medium tracking-[-0.005em] text-paper transition-colors duration-200 ease-plotter group-hover:text-white group-focus-visible:text-white">
+            <HighlightedText text={app.name} query={query} />
+          </h3>
+          <p className="mt-1.5 line-clamp-2 text-sm leading-[1.5] text-mute">
+            <HighlightedText text={app.description} query={query} />
+          </p>
+        </div>
 
-      {isAbsolute && <span className="sr-only">(abre em nova aba)</span>}
-    </a>
+        {isAbsolute && <span className="sr-only">(abre em nova aba)</span>}
+      </a>
+
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        aria-label={`Ver detalhes de ${app.name}`}
+        aria-haspopup="dialog"
+        onClick={() => dialogRef.current?.showModal()}
+        className="absolute top-[18px] left-[18px] z-10 size-7 bg-panel/90 text-mute opacity-80 hover:border-[rgba(237,29,84,0.45)] hover:text-paper hover:opacity-100 focus-visible:opacity-100"
+      >
+        <Maximize2 size={14} strokeWidth={1.5} />
+      </Button>
+
+      <ApplicationDetailDialog ref={dialogRef} app={app} />
+    </div>
   )
 }

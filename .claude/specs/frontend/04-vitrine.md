@@ -103,6 +103,15 @@ a central é um lançador, e ela deve continuar aberta atrás do app. Nesse caso
 </a>
 ```
 
+**Atualizado por `06-detalhe-da-aplicacao.md`:** desde que o card ganhou um botão de
+expandir para o detalhe, a raiz do componente deixou de ser a própria `<a>` — vira um
+`<div className="relative h-full">` que contém a âncora acima (com `group` e todo o resto
+do conteúdo, sem nenhuma mudança por dentro) como irmã do botão de expandir e do `<dialog>`
+de detalhe. Um `<button>` dentro de `<a>` é aninhamento inválido, daí a mudança. A classe
+`group` continua na própria `<a>`, então nenhum seletor `group-hover`/`group-focus-visible`
+desta spec muda — o botão e o `<dialog>` vivem fora da âncora e não participam do estado
+`.group`. Detalhe completo na spec 06.
+
 - Superfície `panel`, borda 1px `line`, `rounded-card`, padding 10px, **sem sombra**.
 - `h3`: 16px, peso 500, `paper`.
 - `p`: 14px, `mute`, `line-height: 1.5`, truncada em 2 linhas com `line-clamp-2`.

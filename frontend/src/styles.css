@@ -177,6 +177,17 @@ input[type='search']::-webkit-search-decoration {
   }
 }
 
+/*
+ * A folha de detalhe. Mesma bancada do card, ampliada — o Tailwind cuida de
+ * borda, fundo e raio. Só o `::backdrop` fica aqui, sem equivalente utilitário.
+ * Sem animação de entrada: a spec 02 fecha o orçamento de movimento em dois
+ * (entrada do grid, varredura do card) e a folha não é nenhum dos dois — ela
+ * aparece, como o resto do app faz sob `prefers-reduced-motion`.
+ */
+.detail-dialog::backdrop {
+  background: rgba(12, 14, 18, 0.82);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
