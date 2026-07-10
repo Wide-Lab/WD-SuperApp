@@ -10,9 +10,9 @@ Uma aplicação web que lista todas as aplicações internas da Widelab. Cada ap
 aparece como um card com imagem, título e descrição, e o card inteiro é um link para
 a aplicação.
 
-No futuro, a central também será o ponto único de autenticação de todas essas
-aplicações. Hoje, nenhuma delas tem lógica de permissões, o que torna a centralização
-viável sem um modelo de autorização.
+No futuro, a central também será o ponto único de autenticação das aplicações
+hospedadas em subdomínios de `widelab.com.br`. Hoje, nenhuma delas tem lógica de
+permissões, o que torna a centralização viável sem um modelo de autorização.
 
 ## Fases
 
@@ -20,7 +20,7 @@ viável sem um modelo de autorização.
 |---|---|---|
 | **1** | Vitrine: grid de cards lendo um JSON estático. Sem autenticação. | **Em especificação** |
 | 2 | Backend FastAPI + Postgres: o catálogo passa a vir de `GET /api/apps`. | Não iniciada |
-| 3 | Autenticação centralizada por e-mail e senha, consumida pelas demais aplicações. | Não iniciada |
+| 3 | Autenticação centralizada por e-mail e senha, consumida pelas aplicações em `*.widelab.com.br`. | Não iniciada |
 
 O faseamento é desenhado para que a fase 2 **não toque em nenhuma tela**: a fase 1 já
 carrega o catálogo de forma assíncrona, com estados de carregando, erro e vazio. A
@@ -32,6 +32,24 @@ migração troca o corpo de uma única função. Ver `frontend/03-catalogo-de-ap
 cookie de sessão na fase 3 é o FastAPI, então a central não precisa de servidor próprio.
 Escolhemos o mesmo ecossistema do `receipt-reader`, menos o TanStack Start — evita a
 dependência de `nitro-nightly` sem criar uma segunda cultura de frontend na casa.
+
+**O SSO da fase 3 cobre só `*.widelab.com.br`.** Um cookie de sessão com
+`Domain=.widelab.com.br` é enviado automaticamente para qualquer subdomínio, mas não
+atravessa domínios diferentes — é restrição do navegador, não de configuração. Aplicações
+em domínio próprio (hoje, só o Cronify, em `app.cronify.com.br`) ficam fora da fase 3 e
+continuam com o login que já têm. Se um dia isso precisar mudar, o caminho é um fluxo de
+redirect com código de uso único trocado por sessão no backend de cada app — um OIDC
+enxuto. Não está planejado agora.
+
+**A central autentica, não autoriza.** Ela expõe só identidade (`id`, `email`, `name`)
+via cookie de sessão + `GET /auth/me`. Nenhum modelo de permissão ou papel entra no schema
+dela. Cada aplicação trata autorização localmente — provisiona seu próprio registro (ex.:
+`app_user`) na primeira vez que recebe aquele `user_id`, com as regras de negócio que
+fizerem sentido pra ela. Isso evita acoplar a central às regras de cada app, que já
+sabemos que serão diferentes entre si.
+
+**Autenticação por e-mail e senha, gerenciada pela própria central.** Implica, na fase 3:
+hash de senha, política de senha e fluxo de recuperação. Nada disso existe na fase 1.
 
 **O catálogo é um JSON estático servido de `public/apps.json`,** validado com Zod em
 runtime e acompanhado de um JSON Schema irmão que dá autocomplete no editor.
@@ -61,22 +79,10 @@ prateleira de produtos. Consequências concretas em `frontend/02-design-system.m
 
 Estão aqui para não serem redecididas do zero daqui a três semanas.
 
-**Hospedagem das aplicações.** Ainda indefinida, e é ela que determina a estratégia de
-autenticação da fase 3:
-
-- Se todas viverem em subdomínios de um mesmo domínio (`cronify.widelab.com.br`,
-  `central.widelab.com.br`), dá para usar um cookie de sessão `httpOnly` no domínio pai.
-  Cada app só chama `GET /auth/me`. É de longe o caminho mais simples e mais seguro.
-- Se estiverem em domínios distintos, o cookie compartilhado deixa de funcionar e o
-  caminho é um fluxo de redirect com código de uso único, trocado por sessão no backend
-  de cada app — um OIDC enxuto.
-
-Enquanto isso não se resolve, as `url` do `apps.json` são **placeholders** e precisam ser
-corrigidas.
-
-**Autenticação será por e-mail e senha**, gerenciados pela própria central. Isso implica,
-na fase 3: hash de senha, política de senha e fluxo de recuperação. Nada disso existe na
-fase 1.
+**Hospedagem definitiva de cada aplicação.** As `url` do `apps.json` que hoje não estão
+em `*.widelab.com.br` (caso do Cronify) são **placeholders** e precisam ser corrigidas. A
+estratégia de SSO pra fora desse domínio (ver "Decisões tomadas") só entra em pauta se
+isso mudar.
 
 ## Convenções herdadas
 
@@ -98,4 +104,10 @@ Implementáveis nesta ordem. Cada uma declara suas dependências.
 4. [`frontend/04-vitrine.md`](frontend/04-vitrine.md) — shell, grid, card, estados.
 5. [`frontend/05-busca.md`](frontend/05-busca.md) — filtro, `?q=`, destaque, acessibilidade.
 
-As specs de backend e autenticação serão escritas quando chegarmos nas fases 2 e 3.
+Backend (fases 2 e 3):
+
+1. [`backend/01-fundacao.md`](backend/01-fundacao.md) — scaffold FastAPI, estrutura de módulo, Postgres async.
+2. [`backend/02-auth.md`](backend/02-auth.md) — sessão via JWT, cookie compartilhado, contrato para os outros apps.
+
+O catálogo via `GET /api/apps` (fase 2) ainda não tem spec própria — entra como módulo
+`applications` seguindo a convenção de `backend/01-fundacao.md`.
