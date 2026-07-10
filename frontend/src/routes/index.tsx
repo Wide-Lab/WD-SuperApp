@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useMemo, useRef } from 'react'
 import { z } from 'zod'
 import { Masthead } from '#/components/layout/masthead'
@@ -9,12 +9,21 @@ import { EmptyResultsState } from '#/features/applications/components/empty-resu
 import { ErrorState } from '#/features/applications/components/error-state'
 import { filterApplications } from '#/features/applications/lib/filter'
 import { useApplications } from '#/features/applications/use-applications'
+import { currentUserQueryOptions } from '#/features/auth/use-current-user'
 
 /* O termo vive na URL: o link é compartilhável e Voltar/Avançar funcionam. */
 const searchSchema = z.object({ q: z.string().optional() })
 
 export const Route = createFileRoute('/')({
   validateSearch: searchSchema,
+  // Única rota protegida hoje: o guard fica aqui mesmo. Se uma segunda rota
+  // precisar de autenticação, aí vale extrair para um layout `_authenticated`.
+  beforeLoad: async ({ context }) => {
+    const user = await context.queryClient.ensureQueryData(
+      currentUserQueryOptions(),
+    )
+    if (!user) throw redirect({ to: '/login' })
+  },
   component: Vitrine,
 })
 
