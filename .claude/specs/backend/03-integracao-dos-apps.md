@@ -57,7 +57,7 @@ def get_current_user(request: Request) -> AuthenticatedUser:   # <- `def`, não 
 
     token = request.cookies.get("session")
     if not token:
-        raise HTTPException(401, "Não autenticado.")
+        raise NotAuthenticatedError("Não autenticado.")
     try:
         key = _jwk_client().get_signing_key_from_jwt(token).key
         claims = jwt.decode(
@@ -66,7 +66,7 @@ def get_current_user(request: Request) -> AuthenticatedUser:   # <- `def`, não 
             options={"require": ["exp", "iss", "sub"]},
         )
     except (jwt.InvalidTokenError, PyJWKClientError):
-        raise HTTPException(401, "Sessão inválida ou expirada.")
+        raise NotAuthenticatedError("Sessão inválida ou expirada.")
     return AuthenticatedUser(id=claims["sub"], email=claims["email"], name=claims["name"])
 ```
 
@@ -81,6 +81,11 @@ Três detalhes que não são estilo, são correção:
 
 `PyJWKClientError` é irmão de `InvalidTokenError`, não subclasse: o `except` precisa dos dois,
 senão um JWKS fora do ar vira 500 em vez de 401.
+
+`NotAuthenticatedError` é exceção do app, com um exception handler que devolve
+`{detail, login_url}` — não um `HTTPException` cru, que produziria só `{detail}`. Assim **todo**
+401 do guard carrega o destino do login, e não só o de `/api/auth/me`: o cliente HTTP do front
+sabe para onde mandar o usuário a partir de qualquer chamada que expire no meio do uso.
 
 ## Backend: as duas rotas de cada app
 
