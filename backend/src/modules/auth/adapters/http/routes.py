@@ -31,10 +31,12 @@ async def login(
     response.set_cookie(
         "session",
         token,
-        domain=config.AUTH_COOKIE_DOMAIN,
+        # `or None`: string vazia viraria `Domain=` — atributo inválido, cookie
+        # descartado. `None` é o que produz um cookie host-only de verdade.
+        domain=config.AUTH_COOKIE_DOMAIN or None,
         path="/",
         httponly=True,
-        secure=True,
+        secure=config.AUTH_COOKIE_SECURE,
         samesite="lax",
         max_age=config.AUTH_TOKEN_TTL_SECONDS,
     )
@@ -43,7 +45,9 @@ async def login(
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(response: Response) -> None:
-    response.delete_cookie("session", domain=get_config().AUTH_COOKIE_DOMAIN, path="/")
+    response.delete_cookie(
+        "session", domain=get_config().AUTH_COOKIE_DOMAIN or None, path="/"
+    )
 
 
 @router.get("/me", response_model=UserResponse)

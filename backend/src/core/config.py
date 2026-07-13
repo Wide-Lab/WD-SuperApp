@@ -17,7 +17,14 @@ class Config(BaseSettings):
     AUTH_JWT_PRIVATE_KEY: str
     AUTH_JWT_PUBLIC_KEY: str
     AUTH_TOKEN_TTL_SECONDS: int = 604800
+
+    # Vazio emite cookie host-only — é o que permite testar em `localhost`, onde
+    # nenhum cookie de `.widelab.com.br` jamais seria aceito. Em produção, o
+    # domínio pai é o que faz a sessão valer para todos os subdomínios.
     AUTH_COOKIE_DOMAIN: str = ".widelab.com.br"
+    # `Secure` sobre http é recusado pelo navegador fora de `localhost`. Desligar
+    # é para desenvolvimento; em produção, ligado — senão a sessão viaja em claro.
+    AUTH_COOKIE_SECURE: bool = True
 
     AUTH_DEFAULT_USER_EMAIL: str = ""
     AUTH_DEFAULT_USER_NAME: str = ""
