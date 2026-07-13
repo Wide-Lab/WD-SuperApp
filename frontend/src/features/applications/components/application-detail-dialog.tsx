@@ -42,7 +42,7 @@ export function ApplicationDetailDialog({
       onClick={(event) => {
         if (event.target === event.currentTarget) event.currentTarget.close()
       }}
-      className="detail-dialog w-[min(560px,calc(100vw-2rem))] max-h-[90vh] overflow-hidden rounded-card border border-line bg-panel p-0 text-paper"
+      className="detail-dialog m-auto w-[min(560px,calc(100vw-2rem))] max-h-[90vh] overflow-hidden rounded-card border border-line bg-panel p-0 text-paper"
     >
       <div className="plot-bed relative aspect-[16/10] w-full">
         {app.image ? (
