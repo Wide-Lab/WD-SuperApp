@@ -124,9 +124,40 @@ AUTH_COOKIE_DOMAIN=.widelab.com.br
 AUTH_DEV_BYPASS=false
 ```
 
-`AUTH_DEV_BYPASS=true` devolve um usuário fixo sem olhar o cookie — o cookie é `Secure` e
-`Domain=.widelab.com.br`, então nunca chega em `localhost`. Default `false`, e em produção fica
-`false`: ligada, ela é a autenticação inteira desligada.
+Na central, duas que existem só para não travar o teste local (defaults de produção):
+`AUTH_COOKIE_DOMAIN=.widelab.com.br` e `AUTH_COOKIE_SECURE=true`.
+
+`AUTH_DEV_BYPASS=true` devolve um usuário fixo sem olhar o cookie. Default `false`, e em produção
+fica `false`: ligada, ela é a autenticação inteira desligada.
+
+## Como testar de verdade, em localhost
+
+O bypass não testa integração nenhuma — ele a pula. Para exercitar o fluxo real com um token
+real, sem domínio nem https:
+
+Na central, `AUTH_COOKIE_DOMAIN=` (vazio, cookie host-only — um cookie de `.widelab.com.br`
+nunca seria aceito em `localhost`) e `AUTH_COOKIE_SECURE=false` (o navegador recusa `Secure`
+sobre http). No app, o JWKS por `http://host.docker.internal:<porta>/...`: dentro do contêiner,
+`localhost` é o próprio contêiner, e apontar para lá dá `PyJWKClientConnectionError`.
+
+**`CENTRAL_AUTH_ISSUER` continua `central.widelab.com.br`**, nunca localhost: o `iss` é gravado
+dentro do token pela central, independente da URL por onde ela é acessada.
+
+O teste que prova tudo, sem navegador — cookies ignoram porta, então o mesmo cookie serve os
+dois apps em `localhost`:
+
+```bash
+curl -s -c cookies.txt -X POST http://localhost:8105/api/auth/login \
+  -H 'Content-Type: application/json' -d '{"email":"…","password":"…"}'
+curl -i -b cookies.txt http://localhost:<porta-do-app>/api/auth/me
+```
+
+`200` com `{id, email, name}` prova o que os testes com JWKS dublado não alcançam: JWKS buscado,
+chave casada pelo `kid`, assinatura RS256 conferida, `iss` validado — com token real.
+
+O que localhost **não** testa: o salto de volta pós-login. `safeRedirect`, na central, só aceita
+`https` em `widelab.com.br` — `http://localhost:8953` é recusado como qualquer destino estranho.
+Só fecha em domínio real.
 
 ## Critérios de aceite
 
