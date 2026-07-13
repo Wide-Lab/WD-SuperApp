@@ -3,9 +3,10 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
+import { safeRedirect } from '../lib/redirect'
 import { useLogin } from '../use-login'
 
-export function LoginForm() {
+export function LoginForm({ redirectTo }: { redirectTo?: string }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const navigate = useNavigate()
@@ -15,7 +16,17 @@ export function LoginForm() {
     event.preventDefault()
     login.mutate(
       { email, password },
-      { onSuccess: () => void navigate({ to: '/' }) },
+      {
+        onSuccess: () => {
+          /*
+           * Destino externo sai do router: é outra origem, e a navegação de
+           * documento é o que faz o navegador levar o cookie recém-posto.
+           */
+          const destination = safeRedirect(redirectTo)
+          if (destination) window.location.assign(destination)
+          else void navigate({ to: '/' })
+        },
+      },
     )
   }
 

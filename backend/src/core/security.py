@@ -33,7 +33,15 @@ def create_access_token(claims: dict[str, Any], expires_in: int) -> str:
         "exp": now + timedelta(seconds=expires_in),
         "iss": _ISSUER,
     }
-    return jwt.encode(payload, config.AUTH_JWT_PRIVATE_KEY, algorithm="RS256")
+    # O `kid` no header é o que permite ao consumidor casar o token com a chave
+    # certa do JWKS sem tentativa e erro — sem ele, `PyJWKClient` não encontra
+    # chave nenhuma, mesmo havendo só uma publicada.
+    return jwt.encode(
+        payload,
+        config.AUTH_JWT_PRIVATE_KEY,
+        algorithm="RS256",
+        headers={"kid": _JWK_KEY_ID},
+    )
 
 
 def decode_access_token(token: str) -> dict[str, Any]:
