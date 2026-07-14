@@ -184,7 +184,8 @@ input[type='search']::-webkit-search-decoration {
  * (entrada do grid, varredura do card) e a folha não é nenhum dos dois — ela
  * aparece, como o resto do app faz sob `prefers-reduced-motion`.
  */
-.detail-dialog::backdrop {
+.detail-dialog::backdrop,
+.confirm-dialog::backdrop {
   background: rgba(12, 14, 18, 0.82);
 }
 

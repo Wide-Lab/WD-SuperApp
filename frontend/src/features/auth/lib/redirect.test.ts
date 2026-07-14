@@ -15,7 +15,9 @@ describe('safeRedirect', () => {
   })
 
   it('aceita o domínio raiz', () => {
-    expect(safeRedirect('https://widelab.com.br/')).toBe('https://widelab.com.br/')
+    expect(safeRedirect('https://widelab.com.br/')).toBe(
+      'https://widelab.com.br/',
+    )
   })
 
   it('recusa domínio de fora', () => {

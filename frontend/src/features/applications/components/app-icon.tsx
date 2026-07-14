@@ -1,15 +1,9 @@
-import { DynamicIcon, dynamicIconImports } from 'lucide-react/dynamic'
-import type { IconName } from 'lucide-react/dynamic'
+import { DynamicIcon } from 'lucide-react/dynamic'
 import type { ComponentProps } from 'react'
-
-const FALLBACK: IconName = 'app-window'
+import { FALLBACK_ICON, isIconName } from '../lib/icon-name'
 
 /* Um aviso por `id`, para o console não virar enxurrada a cada render. */
 const warned = new Set<string>()
-
-function isIconName(name: string): name is IconName {
-  return name in dynamicIconImports
-}
 
 type AppIconProps = Omit<ComponentProps<typeof DynamicIcon>, 'name'> & {
   /** Nome de um ícone Lucide em kebab-case. */
@@ -28,9 +22,9 @@ export function AppIcon({ name, appId, ...props }: AppIconProps) {
   if (!known && import.meta.env.DEV && !warned.has(appId)) {
     warned.add(appId)
     console.warn(
-      `[central] ícone "${name}" não existe no Lucide (app "${appId}"). Usando "${FALLBACK}".`,
+      `[central] ícone "${name}" não existe no Lucide (app "${appId}"). Usando "${FALLBACK_ICON}".`,
     )
   }
 
-  return <DynamicIcon name={known ? name : FALLBACK} {...props} />
+  return <DynamicIcon name={known ? name : FALLBACK_ICON} {...props} />
 }

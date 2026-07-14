@@ -1,3 +1,6 @@
+import { Link } from '@tanstack/react-router'
+import { buttonVariants } from '#/components/ui/button'
+
 /* Uma tela vazia é um convite para agir: diz exatamente qual é o próximo passo. */
 export function EmptyCatalogState() {
   return (
@@ -6,9 +9,11 @@ export function EmptyCatalogState() {
         Nenhuma aplicação cadastrada
       </h2>
       <p className="mx-auto mt-2 max-w-md text-sm leading-[1.5] text-mute">
-        Adicione a primeira em{' '}
-        <code className="font-mono text-[0.8125rem]">public/apps.json</code>.
+        Publique a primeira e ela aparece aqui na hora.
       </p>
+      <Link to="/aplicacoes/nova" className={`${buttonVariants()} mt-8`}>
+        Nova aplicação
+      </Link>
     </div>
   )
 }

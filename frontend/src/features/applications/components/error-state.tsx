@@ -16,8 +16,8 @@ export function ErrorState({ error, onRetry }: ErrorStateProps) {
         Não foi possível carregar as aplicações
       </h2>
       <p className="mx-auto mt-2 max-w-md text-sm leading-[1.5] text-mute">
-        O arquivo <code className="font-mono text-[0.8125rem]">apps.json</code>{' '}
-        não respondeu ou está inválido.
+        O catálogo não respondeu ou veio em um formato que a vitrine não
+        entende.
       </p>
 
       {import.meta.env.DEV && issues.length > 0 && (
