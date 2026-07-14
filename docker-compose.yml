@@ -2,15 +2,15 @@ services:
   db:
     image: postgres:17-alpine
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-central}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - db-data:/var/lib/postgresql/data
     networks:
       - db-internal
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-central}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -25,8 +25,8 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       APPLICATIONS_STORAGE_ENDPOINT_URL: http://minio:9000
-      APPLICATIONS_STORAGE_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
-      APPLICATIONS_STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      APPLICATIONS_STORAGE_ACCESS_KEY: ${MINIO_ROOT_USER}
+      APPLICATIONS_STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
     depends_on:
       db:
         condition: service_healthy
@@ -38,22 +38,21 @@ services:
     restart: unless-stopped
 
   minio:
-    image: minio/minio:RELEASE.2025-04-08T15-41-24Z
+    image: minio/minio:latest
     container_name: central-widelab-minio
     command: server /data
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
       - minio-data:/data
     networks:
       - edge
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "mc", "ready", "local"]
       interval: 5s
       timeout: 5s
       retries: 10
-    restart: unless-stopped
 
   frontend:
     build:
@@ -69,7 +68,7 @@ services:
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
-      - "8105:80"
+      - "${PORT}:80"
     depends_on:
       - frontend
       - backend
