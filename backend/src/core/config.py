@@ -30,6 +30,16 @@ class Config(BaseSettings):
     AUTH_DEFAULT_USER_NAME: str = ""
     AUTH_DEFAULT_USER_PASSWORD: str = ""
 
+    # Endpoint interno (rede docker) usado pelo backend para autenticar chamadas
+    # S3 no MinIO — nunca chega ao browser.
+    APPLICATIONS_STORAGE_ENDPOINT_URL: str = "http://minio:9000"
+    APPLICATIONS_STORAGE_ACCESS_KEY: str = "minioadmin"
+    APPLICATIONS_STORAGE_SECRET_KEY: str = "minioadmin"
+    APPLICATIONS_BUCKET_NAME: str = "applications"
+    # Prefixo público usado para montar o campo `image` de GET /apps — nunca
+    # toca o MinIO, é só o texto que vira parte da URL na resposta JSON.
+    APPLICATIONS_MEDIA_BASE_URL: str = "/media"
+
 
 @lru_cache(maxsize=1)
 def get_config() -> Config:

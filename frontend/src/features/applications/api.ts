@@ -17,18 +17,16 @@ export class CatalogError extends Error {
   }
 }
 
-/**
- * Lê o catálogo. Na fase 2 esta função inteira muda de uma linha:
- * `fetch('/api/apps', { signal, credentials: 'include' })`. Nenhum componente é tocado.
- */
+/** Lê o catálogo do backend (fase 2). */
 export async function fetchApplications(
   signal?: AbortSignal,
 ): Promise<Array<Application>> {
-  const res = await fetch('/apps.json', {
+  const res = await fetch('/api/apps', {
     signal,
+    credentials: 'include',
     headers: { Accept: 'application/json' },
   })
-  if (!res.ok) throw new CatalogError(`apps.json respondeu ${res.status}`)
+  if (!res.ok) throw new CatalogError(`/api/apps respondeu ${res.status}`)
 
   const parsed = catalogSchema.safeParse(await res.json())
   if (!parsed.success) {

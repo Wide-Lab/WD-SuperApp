@@ -4,3 +4,7 @@ class ResourceNotFoundError(Exception):
 
 class InvalidCredentialsError(Exception):
     pass
+
+
+class DuplicateResourceError(Exception):
+    pass

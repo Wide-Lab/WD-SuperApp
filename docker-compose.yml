@@ -24,12 +24,35 @@ services:
       - .env
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      APPLICATIONS_STORAGE_ENDPOINT_URL: http://minio:9000
+      APPLICATIONS_STORAGE_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      APPLICATIONS_STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
     depends_on:
       db:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     networks:
       - db-internal
       - edge
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-08T15-41-24Z
+    container_name: central-widelab-minio
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio-data:/data
+    networks:
+      - edge
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
 
   frontend:
@@ -61,3 +84,4 @@ networks:
 
 volumes:
   db-data:
+  minio-data:
