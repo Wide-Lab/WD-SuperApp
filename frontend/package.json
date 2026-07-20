@@ -8,9 +8,10 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "npm run routes && tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
+    "routes": "tsr generate",
+    "typecheck": "npm run routes && tsc --noEmit",
     "test": "vitest run",
     "lint": "eslint .",
     "format": "prettier --write . && eslint --fix .",
@@ -35,6 +36,7 @@
   "devDependencies": {
     "@tanstack/eslint-config": "^0.4.0",
     "@tanstack/react-router-devtools": "^1.167.0",
+    "@tanstack/router-cli": "^1.167.21",
     "@tanstack/router-plugin": "^1.168.19",
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
