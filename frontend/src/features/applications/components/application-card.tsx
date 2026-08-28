@@ -26,6 +26,8 @@ interface ApplicationCardProps {
 export function ApplicationCard({ app, query }: ApplicationCardProps) {
   const isAbsolute = ABSOLUTE_URL.test(app.url)
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const examples = app.examples.length
+  const countLabel = `${examples} ${examples === 1 ? 'exemplo' : 'exemplos'}`
 
   return (
     <div className="relative h-full">
@@ -44,6 +46,20 @@ export function ApplicationCard({ app, query }: ApplicationCardProps) {
           <p className="mt-1.5 line-clamp-2 text-sm leading-[1.5] text-mute">
             <HighlightedText text={app.description} query={query} />
           </p>
+          {/*
+            `aria-hidden` porque o texto está dentro da âncora mas os exemplos
+            não estão nela: um leitor de tela anunciaria "link: …, 2 exemplos" e
+            prometeria um destino que este link não tem. A contagem chega a quem
+            realmente leva a ela, pelo `aria-label` do botão de expandir.
+          */}
+          {examples > 0 && (
+            <p
+              aria-hidden="true"
+              className="mt-2 font-mono text-[0.6875rem] tracking-[0.04em] text-mute"
+            >
+              {countLabel}
+            </p>
+          )}
         </div>
 
         {isAbsolute && <span className="sr-only">(abre em nova aba)</span>}
@@ -53,7 +69,11 @@ export function ApplicationCard({ app, query }: ApplicationCardProps) {
         type="button"
         variant="outline"
         size="icon"
-        aria-label={`Ver detalhes de ${app.name}`}
+        aria-label={
+          examples > 0
+            ? `Ver detalhes de ${app.name} (${countLabel})`
+            : `Ver detalhes de ${app.name}`
+        }
         aria-haspopup="dialog"
         onClick={() => dialogRef.current?.showModal()}
         className="absolute top-[18px] left-[18px] z-10 size-7 bg-panel/90 text-mute opacity-80 hover:border-[rgba(237,29,84,0.45)] hover:text-paper hover:opacity-100 focus-visible:opacity-100"

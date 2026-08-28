@@ -28,6 +28,7 @@ export function ApplicationPreview({
   const plotted = draft.id !== ''
   const { x, y } = coordinate(draft.id)
   const iconName = isIconName(draft.icon) ? draft.icon : FALLBACK_ICON
+  const examples = draft.examples.length
 
   return (
     <div>
@@ -82,6 +83,11 @@ export function ApplicationPreview({
               ? 'O que ela faz, em uma linha.'
               : draft.description}
           </p>
+          {examples > 0 && (
+            <p className="mt-2 font-mono text-[0.6875rem] tracking-[0.04em] text-mute">
+              {examples} {examples === 1 ? 'exemplo' : 'exemplos'}
+            </p>
+          )}
         </div>
       </div>
 
