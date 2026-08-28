@@ -73,6 +73,7 @@ async def create_application(
             description=data.description,
             url=data.url,
             icon=data.icon,
+            examples=[],
         )
     except DuplicateResourceError:
         raise HTTPException(
@@ -95,6 +96,7 @@ async def update_application(
             description=data.description,
             url=data.url,
             icon=data.icon,
+            examples=[],
         )
     except ResourceNotFoundError:
         raise HTTPException(status_code=404, detail="Aplicação não encontrada.")

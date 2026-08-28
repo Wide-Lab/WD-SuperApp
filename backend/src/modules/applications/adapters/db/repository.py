@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Sequence
 
 from sqlalchemy import Select, select
 from sqlalchemy.exc import IntegrityError
@@ -8,7 +9,7 @@ from sqlalchemy.orm import selectinload
 from src.core.exceptions import DuplicateResourceError, ResourceNotFoundError
 from src.modules.applications.domain.entities import Application, ApplicationExample
 
-from .models import ApplicationORM
+from .models import ApplicationExampleORM, ApplicationORM
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +29,18 @@ class ApplicationRepository:
         return self._to_domain(orm) if orm else None
 
     async def create(
-        self, *, id: str, name: str, description: str, url: str, icon: str
+        self,
+        *,
+        id: str,
+        name: str,
+        description: str,
+        url: str,
+        icon: str,
+        examples: Sequence[ApplicationExample],
     ) -> Application:
         logger.info("Criando nova aplicação. id=%s", id)
         orm = ApplicationORM(id=id, name=name, description=description, url=url, icon=icon)
+        orm.examples = self._to_orm_examples(examples)
         self._session.add(orm)
         try:
             await self._session.commit()
@@ -41,10 +50,20 @@ class ApplicationRepository:
         return self._to_domain(await self._get_orm_or_raise(id))
 
     async def update(
-        self, application_id: str, *, name: str, description: str, url: str, icon: str
+        self,
+        application_id: str,
+        *,
+        name: str,
+        description: str,
+        url: str,
+        icon: str,
+        examples: Sequence[ApplicationExample],
     ) -> Application:
         orm = await self._get_orm_or_raise(application_id)
         orm.name, orm.description, orm.url, orm.icon = name, description, url, icon
+        # Substituição, não merge: a lista recebida é a lista final. `delete-orphan`
+        # apaga as linhas que ficaram de fora, na mesma transação do resto.
+        orm.examples = self._to_orm_examples(examples)
         await self._session.commit()
         return self._to_domain(await self._get_orm_or_raise(application_id))
 
@@ -60,6 +79,16 @@ class ApplicationRepository:
         await self._session.delete(orm)
         await self._session.commit()
         return app
+
+    # `position` é o que devolve ordem a uma tabela que não tem: o Postgres não guarda
+    # ordem de linha, e a tupla do domínio guarda.
+    def _to_orm_examples(
+        self, examples: Sequence[ApplicationExample]
+    ) -> list[ApplicationExampleORM]:
+        return [
+            ApplicationExampleORM(label=e.label, url=e.url, position=position)
+            for position, e in enumerate(examples)
+        ]
 
     # Toda leitura passa por aqui: `examples` é lazy e, num repositório async, ler um
     # lazy não carregado levanta MissingGreenlet em vez de disparar a query. Com
