@@ -1,3 +1,4 @@
+import { Maximize2 } from 'lucide-react'
 import { DynamicIcon } from 'lucide-react/dynamic'
 import { coordinate } from '../lib/coordinate'
 import { FALLBACK_ICON, isIconName } from '../lib/icon-name'
@@ -70,7 +71,7 @@ export function ApplicationPreview({
           )}
         </div>
 
-        <div className="px-1 pt-3 pb-1">
+        <div className="px-1 pt-3 pb-3">
           <h3 className="text-base leading-[1.3] font-medium tracking-[-0.005em] text-paper">
             {draft.name === '' ? (
               <span className="text-mute">Nome da aplicação</span>
@@ -83,10 +84,22 @@ export function ApplicationPreview({
               ? 'O que ela faz, em uma linha.'
               : draft.description}
           </p>
+        </div>
+
+        {/* A régua do card, desenhada e não clicável: aqui ela é prévia. */}
+        <div className="-mx-2.5 -mb-2.5 flex items-center gap-2 rounded-b-[9px] border-t border-line px-3.5 py-3">
+          <Maximize2
+            size={13}
+            strokeWidth={1.5}
+            className="shrink-0 text-mute"
+          />
+          <span className="text-[0.8125rem] leading-none font-medium text-paper">
+            Ver detalhes
+          </span>
           {examples > 0 && (
-            <p className="mt-2 font-mono text-[0.6875rem] tracking-[0.04em] text-mute">
+            <span className="ml-auto font-mono text-[0.6875rem] leading-none tracking-[0.04em] text-mute">
               {examples} {examples === 1 ? 'exemplo' : 'exemplos'}
-            </p>
+            </span>
           )}
         </div>
       </div>
