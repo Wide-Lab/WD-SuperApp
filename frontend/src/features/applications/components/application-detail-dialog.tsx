@@ -28,6 +28,11 @@ function destination(url: string) {
  * fora já vêm de graça do navegador — e o orçamento de movimento da spec 02
  * já está cheio, então ela só aparece, sem animação de entrada.
  *
+ * `open:flex` e não `flex`: uma classe de display no `<dialog>` vence a regra
+ * `dialog:not([open]) { display: none }` do navegador (origem de autor ganha da
+ * do UA) e todas as folhas do grid ficariam desenhadas na página, fora de foco e
+ * sem `::backdrop`. Com a variante, o display só existe enquanto o `[open]` existe.
+ *
  * `flex flex-col` com o leito `shrink-0` e o conteúdo rolando por dentro: com oito
  * exemplos numa tela baixa, `overflow-hidden` cortaria o botão "Abrir" — o controle
  * mais importante da tela. O leito nunca encolhe (é o que identifica o app) e o
@@ -49,7 +54,7 @@ export function ApplicationDetailDialog({
       onClick={(event) => {
         if (event.target === event.currentTarget) event.currentTarget.close()
       }}
-      className="detail-dialog m-auto flex max-h-[90vh] w-[min(560px,calc(100vw-2rem))] flex-col overflow-hidden rounded-card border border-line bg-panel p-0 text-paper"
+      className="detail-dialog m-auto max-h-[90vh] w-[min(560px,calc(100vw-2rem))] flex-col overflow-hidden open:flex rounded-card border border-line bg-panel p-0 text-paper"
     >
       <div className="plot-bed relative aspect-[16/10] w-full shrink-0">
         {app.image ? (
