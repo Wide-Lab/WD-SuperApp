@@ -1,11 +1,12 @@
 import logging
 
-from sqlalchemy import select
+from sqlalchemy import Select, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.core.exceptions import DuplicateResourceError, ResourceNotFoundError
-from src.modules.applications.domain.entities import Application
+from src.modules.applications.domain.entities import Application, ApplicationExample
 
 from .models import ApplicationORM
 
@@ -18,15 +19,12 @@ class ApplicationRepository:
 
     async def list_all(self) -> list[Application]:
         result = await self._session.execute(
-            select(ApplicationORM).order_by(ApplicationORM.created_at.asc())
+            self._select_with_examples().order_by(ApplicationORM.created_at.asc())
         )
         return [self._to_domain(orm) for orm in result.scalars().all()]
 
     async def get_by_id(self, application_id: str) -> Application | None:
-        result = await self._session.execute(
-            select(ApplicationORM).where(ApplicationORM.id == application_id)
-        )
-        orm = result.scalar_one_or_none()
+        orm = await self._get_orm(application_id)
         return self._to_domain(orm) if orm else None
 
     async def create(
@@ -40,8 +38,7 @@ class ApplicationRepository:
         except IntegrityError:
             await self._session.rollback()
             raise DuplicateResourceError(f"Já existe uma aplicação com id '{id}'.")
-        await self._session.refresh(orm)
-        return self._to_domain(orm)
+        return self._to_domain(await self._get_orm_or_raise(id))
 
     async def update(
         self, application_id: str, *, name: str, description: str, url: str, icon: str
@@ -49,15 +46,13 @@ class ApplicationRepository:
         orm = await self._get_orm_or_raise(application_id)
         orm.name, orm.description, orm.url, orm.icon = name, description, url, icon
         await self._session.commit()
-        await self._session.refresh(orm)
-        return self._to_domain(orm)
+        return self._to_domain(await self._get_orm_or_raise(application_id))
 
     async def update_image(self, application_id: str, image: str | None) -> Application:
         orm = await self._get_orm_or_raise(application_id)
         orm.image = image
         await self._session.commit()
-        await self._session.refresh(orm)
-        return self._to_domain(orm)
+        return self._to_domain(await self._get_orm_or_raise(application_id))
 
     async def delete(self, application_id: str) -> Application:
         orm = await self._get_orm_or_raise(application_id)
@@ -66,11 +61,21 @@ class ApplicationRepository:
         await self._session.commit()
         return app
 
-    async def _get_orm_or_raise(self, application_id: str) -> ApplicationORM:
+    # Toda leitura passa por aqui: `examples` é lazy e, num repositório async, ler um
+    # lazy não carregado levanta MissingGreenlet em vez de disparar a query. Com
+    # `selectinload` são duas queries por leitura, independente de quantas aplicações
+    # voltem — nunca uma por linha.
+    def _select_with_examples(self) -> Select[tuple[ApplicationORM]]:
+        return select(ApplicationORM).options(selectinload(ApplicationORM.examples))
+
+    async def _get_orm(self, application_id: str) -> ApplicationORM | None:
         result = await self._session.execute(
-            select(ApplicationORM).where(ApplicationORM.id == application_id)
+            self._select_with_examples().where(ApplicationORM.id == application_id)
         )
-        orm = result.scalar_one_or_none()
+        return result.scalar_one_or_none()
+
+    async def _get_orm_or_raise(self, application_id: str) -> ApplicationORM:
+        orm = await self._get_orm(application_id)
         if orm is None:
             raise ResourceNotFoundError(f"Aplicação '{application_id}' não encontrada.")
         return orm
@@ -83,5 +88,8 @@ class ApplicationRepository:
             url=orm.url,
             icon=orm.icon,
             image=orm.image,
+            examples=tuple(
+                ApplicationExample(label=e.label, url=e.url) for e in orm.examples
+            ),
             created_at=orm.created_at,
         )
