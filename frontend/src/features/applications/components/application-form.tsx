@@ -79,8 +79,9 @@ export function ApplicationForm({
     if (!parsed.success) {
       const found: DraftErrors = {}
       for (const issue of parsed.error.issues) {
-        const key = issue.path[0] as keyof ApplicationDraft
-        found[key] ??= issue.message
+        const key = issue.path[0]
+        if (typeof key !== 'string' || key === 'examples') continue
+        found[key as keyof DraftErrors] ??= issue.message
       }
       setErrors(found)
 

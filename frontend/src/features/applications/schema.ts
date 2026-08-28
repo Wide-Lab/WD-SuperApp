@@ -2,6 +2,19 @@ import { z } from 'zod'
 
 const KEBAB_CASE = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
+/*
+ * Não é só validação de forma: é o que impede `javascript:` de virar `href`.
+ * `new URL('javascript:alert(1)')` é uma URL válida, então qualquer validação
+ * genérica aceitaria esse valor e ele viraria um link executável dentro do
+ * `<dialog>`. Só `http` e `https` passam.
+ */
+const HTTP_URL = /^https?:\/\//
+
+export const applicationExampleSchema = z.object({
+  label: z.string().min(1).max(40),
+  url: z.string().max(2048).regex(HTTP_URL),
+})
+
 export const applicationSchema = z.object({
   id: z.string().regex(KEBAB_CASE),
   name: z.string().min(1).max(60),
@@ -16,6 +29,12 @@ export const applicationSchema = z.object({
     .nullable()
     .transform((value) => value ?? undefined)
     .optional(),
+  /*
+   * O backend sempre manda a chave, mas um frontend novo contra um backend antigo
+   * mostraria "Catálogo inválido" na vitrine inteira por causa de uma seção
+   * secundária. O padrão falha para o lado certo.
+   */
+  examples: z.array(applicationExampleSchema).default([]),
 })
 
 export const catalogSchema = z.object({
@@ -46,4 +65,16 @@ export const applicationDraftSchema = z.object({
     .string()
     .min(1, 'Escolha um ícone.')
     .regex(KEBAB_CASE, 'Nome de ícone Lucide em kebab-case. Ex.: file-text.'),
+  examples: z
+    .array(
+      z.object({
+        label: z.string().trim().min(1, 'Dê um nome ao exemplo.').max(40),
+        url: z
+          .string()
+          .trim()
+          .max(2048, 'Link longo demais.')
+          .regex(HTTP_URL, 'Cole o link completo, começando com https://.'),
+      }),
+    )
+    .max(8, 'No máximo 8 exemplos por aplicação.'),
 })

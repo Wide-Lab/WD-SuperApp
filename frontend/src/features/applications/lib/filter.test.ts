@@ -9,6 +9,7 @@ const apps: Array<Application> = [
     description: 'Agenda e acompanha a execução de rotinas automatizadas.',
     url: 'https://cronify.widelab.com.br',
     icon: 'calendar-clock',
+    examples: [],
   },
   {
     id: 'rpa-generator',
@@ -16,6 +17,7 @@ const apps: Array<Application> = [
     description: 'Cada Ação vira um passo do robô.',
     url: 'https://rpa-generator.widelab.com.br',
     icon: 'bot',
+    examples: [],
   },
   {
     id: 'widehub',
@@ -23,6 +25,7 @@ const apps: Array<Application> = [
     description: 'Hub interno de dados e indicadores.',
     url: 'https://widehub.widelab.com.br',
     icon: 'layout-dashboard',
+    examples: [],
   },
 ]
 

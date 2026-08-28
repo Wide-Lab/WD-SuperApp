@@ -16,6 +16,7 @@ const EMPTY: ApplicationDraft = {
   description: '',
   url: '',
   icon: '',
+  examples: [],
 }
 
 function NovaAplicacao() {

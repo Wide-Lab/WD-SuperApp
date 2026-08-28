@@ -130,6 +130,7 @@ function EditarAplicacao() {
             description: app.description,
             url: app.url,
             icon: app.icon,
+            examples: app.examples,
           }}
           submitLabel="Salvar alterações"
           submitting={update.isPending}
