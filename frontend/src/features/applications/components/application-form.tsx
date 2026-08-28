@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { Plus, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { ApplicationPreview } from './application-preview'
 import { FormField } from './form-field'
@@ -10,7 +11,7 @@ import { Textarea } from '#/components/ui/textarea'
 import { isIconName } from '../lib/icon-name'
 import { slugify } from '../lib/slugify'
 import { applicationDraftSchema } from '../schema'
-import type { ApplicationDraft, DraftErrors } from '../types'
+import type { ApplicationDraft, DraftErrors, ExampleErrors } from '../types'
 
 interface ImageState {
   url?: string
@@ -35,6 +36,9 @@ interface ApplicationFormProps {
 
 const FIELD_ORDER = ['id', 'name', 'description', 'url', 'icon'] as const
 
+/* Acima disso o detalhe vira um índice de pasta, e o lugar do índice é o Drive. */
+const MAX_EXAMPLES = 8
+
 export function ApplicationForm({
   mode,
   initial,
@@ -47,6 +51,22 @@ export function ApplicationForm({
   const [draft, setDraft] = useState<ApplicationDraft>(initial)
   const [errors, setErrors] = useState<DraftErrors>({})
   /*
+   * Um erro por campo por linha: `DraftErrors` é chaveado por campo do rascunho e
+   * não teria onde guardar o terceiro exemplo.
+   */
+  const [exampleErrors, setExampleErrors] = useState<ExampleErrors>([])
+  /*
+   * A chave de cada linha é um id local, não o índice. Com índice, remover a
+   * primeira de três faz o React reaproveitar o DOM errado: o valor digitado
+   * "sobe" uma linha e o foco vai para o campo errado. Este id não é enviado ao
+   * backend — lá a coleção é substituída inteira.
+   */
+  const [exampleKeys, setExampleKeys] = useState<Array<string>>(() =>
+    initial.examples.map(() => crypto.randomUUID()),
+  )
+  /* O elemento só existe depois do commit; focar dentro do handler pegaria o DOM velho. */
+  const [pendingFocus, setPendingFocus] = useState<string | null>(null)
+  /*
    * Enquanto ninguém tocar no identificador, ele acompanha o nome. Depois do
    * primeiro toque ele é da pessoa, e o nome não mexe mais nele.
    */
@@ -54,6 +74,13 @@ export function ApplicationForm({
 
   const editing = mode === 'edit'
   const unknownIcon = draft.icon !== '' && !isIconName(draft.icon)
+  const examplesFull = draft.examples.length >= MAX_EXAMPLES
+
+  useEffect(() => {
+    if (!pendingFocus) return
+    document.getElementById(pendingFocus)?.focus()
+    setPendingFocus(null)
+  }, [pendingFocus])
 
   function set<TKey extends keyof ApplicationDraft>(
     key: TKey,
@@ -61,6 +88,45 @@ export function ApplicationForm({
   ) {
     setDraft((current) => ({ ...current, [key]: value }))
     setErrors((current) => ({ ...current, [key]: undefined }))
+  }
+
+  function setExample(index: number, field: 'label' | 'url', value: string) {
+    setDraft((current) => ({
+      ...current,
+      examples: current.examples.map((example, i) =>
+        i === index ? { ...example, [field]: value } : example,
+      ),
+    }))
+    setExampleErrors((current) =>
+      current.map((row, i) =>
+        i === index ? { ...row, [field]: undefined } : row,
+      ),
+    )
+  }
+
+  function addExample() {
+    setPendingFocus(`app-example-${draft.examples.length}-label`)
+    setDraft((current) => ({
+      ...current,
+      examples: [...current.examples, { label: '', url: '' }],
+    }))
+    setExampleKeys((current) => [...current, crypto.randomUUID()])
+    setExampleErrors((current) => [...current, {}])
+  }
+
+  /*
+   * O foco vai para o "Remover" da linha seguinte, ou para "Adicionar exemplo" se
+   * a removida era a última. Ele nunca cai no `<body>`.
+   */
+  function removeExample(index: number) {
+    const wasLast = index === draft.examples.length - 1
+    setPendingFocus(wasLast ? 'app-example-add' : `app-example-${index}-remove`)
+    setDraft((current) => ({
+      ...current,
+      examples: current.examples.filter((_, i) => i !== index),
+    }))
+    setExampleKeys((current) => current.filter((_, i) => i !== index))
+    setExampleErrors((current) => current.filter((_, i) => i !== index))
   }
 
   function handleNameChange(name: string) {
@@ -78,16 +144,38 @@ export function ApplicationForm({
     const parsed = applicationDraftSchema.safeParse(draft)
     if (!parsed.success) {
       const found: DraftErrors = {}
+      const foundExamples: ExampleErrors = draft.examples.map(() => ({}))
+
       for (const issue of parsed.error.issues) {
-        const key = issue.path[0]
-        if (typeof key !== 'string' || key === 'examples') continue
+        const [key, index, field] = issue.path
+        if (key === 'examples') {
+          if (typeof index !== 'number') continue
+          if (field !== 'label' && field !== 'url') continue
+          foundExamples[index][field] ??= issue.message
+          continue
+        }
+        if (typeof key !== 'string') continue
         found[key as keyof DraftErrors] ??= issue.message
       }
       setErrors(found)
+      setExampleErrors(foundExamples)
 
-      // O foco vai para o primeiro campo com problema, na ordem em que aparecem.
+      /*
+       * O foco vai para o primeiro campo com problema, na ordem em que aparecem —
+       * e os exemplos vêm depois dos campos da aplicação.
+       */
       const first = FIELD_ORDER.find((key) => found[key])
-      if (first) document.getElementById(`app-${first}`)?.focus()
+      if (first) {
+        document.getElementById(`app-${first}`)?.focus()
+        return
+      }
+      const row = foundExamples.findIndex((line) => line.label ?? line.url)
+      if (row !== -1)
+        document
+          .getElementById(
+            `app-example-${row}-${foundExamples[row].label ? 'label' : 'url'}`,
+          )
+          ?.focus()
       return
     }
 
@@ -234,6 +322,129 @@ export function ApplicationForm({
             />
           )}
         </FormField>
+
+        <div
+          role="group"
+          aria-labelledby="app-examples-label"
+          aria-describedby="app-examples-hint"
+          className="flex flex-col gap-2"
+        >
+          <span
+            id="app-examples-label"
+            className="font-mono text-[0.6875rem] leading-none font-medium tracking-[0.18em] text-mute uppercase"
+          >
+            Exemplos
+          </span>
+
+          {draft.examples.length > 0 && (
+            <ul className="flex flex-col gap-2">
+              {draft.examples.map((example, index) => {
+                const labelId = `app-example-${index}-label`
+                const urlId = `app-example-${index}-url`
+                const rowErrors = exampleErrors[index] ?? {}
+
+                return (
+                  <li key={exampleKeys[index]} className="flex flex-col gap-1">
+                    <div className="grid gap-2 min-[640px]:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)_auto]">
+                      <div className="min-w-0">
+                        <label htmlFor={labelId} className="sr-only">
+                          Rótulo do exemplo {index + 1}
+                        </label>
+                        <Input
+                          id={labelId}
+                          value={example.label}
+                          maxLength={40}
+                          autoComplete="off"
+                          placeholder="Cupons processados"
+                          aria-invalid={rowErrors.label ? true : undefined}
+                          aria-describedby={
+                            rowErrors.label ? `${labelId}-error` : undefined
+                          }
+                          onChange={(event) =>
+                            setExample(index, 'label', event.target.value)
+                          }
+                        />
+                      </div>
+
+                      <div className="min-w-0">
+                        <label htmlFor={urlId} className="sr-only">
+                          Endereço do exemplo {index + 1}
+                        </label>
+                        <Input
+                          id={urlId}
+                          value={example.url}
+                          maxLength={2048}
+                          autoComplete="off"
+                          spellCheck={false}
+                          placeholder="https://drive.google.com/…"
+                          aria-invalid={rowErrors.url ? true : undefined}
+                          aria-describedby={
+                            rowErrors.url ? `${urlId}-error` : undefined
+                          }
+                          onChange={(event) =>
+                            setExample(index, 'url', event.target.value)
+                          }
+                          className="font-mono"
+                        />
+                      </div>
+
+                      <Button
+                        id={`app-example-${index}-remove`}
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Remover exemplo ${index + 1}`}
+                        onClick={() => removeExample(index)}
+                        className="justify-self-start self-center"
+                      >
+                        <X size={14} strokeWidth={1.5} />
+                      </Button>
+                    </div>
+
+                    {rowErrors.label && (
+                      <p
+                        id={`${labelId}-error`}
+                        className="text-[0.8125rem] leading-[1.5] text-pink-soft"
+                      >
+                        {rowErrors.label}
+                      </p>
+                    )}
+                    {rowErrors.url && (
+                      <p
+                        id={`${urlId}-error`}
+                        className="text-[0.8125rem] leading-[1.5] text-pink-soft"
+                      >
+                        {rowErrors.url}
+                      </p>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+
+          <div>
+            <Button
+              id="app-example-add"
+              type="button"
+              variant="outline"
+              disabled={examplesFull}
+              onClick={addExample}
+            >
+              <Plus size={14} strokeWidth={1.5} />
+              Adicionar exemplo
+            </Button>
+          </div>
+
+          <p
+            id="app-examples-hint"
+            className="text-[0.8125rem] leading-[1.5] text-mute"
+          >
+            {examplesFull
+              ? 'Máximo de 8 exemplos.'
+              : 'Links de material de apoio — normalmente uma pasta do Drive. Aparecem no detalhe da aplicação, na ordem abaixo.'}
+          </p>
+        </div>
 
         <ImageField {...image} />
 
