@@ -6,10 +6,12 @@ from src.modules.applications.adapters.http.dependencies.types import (
     ApplicationRepoDependency,
 )
 from src.modules.applications.application.dtos.requests import (
+    ApplicationExampleInput,
     CreateApplicationRequest,
     UpdateApplicationRequest,
 )
 from src.modules.applications.application.dtos.responses import (
+    ApplicationExampleResponse,
     ApplicationListResponse,
     ApplicationResponse,
 )
@@ -22,13 +24,17 @@ from src.modules.applications.application.use_cases.remove_application_image imp
 from src.modules.applications.application.use_cases.upload_application_image import (
     UploadApplicationImageUseCase,
 )
-from src.modules.applications.domain.entities import Application
+from src.modules.applications.domain.entities import Application, ApplicationExample
 from src.modules.auth.adapters.http.dependencies.types import CurrentUserDependency
 
 router = APIRouter()
 
 _MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024
 _ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/webp", "image/svg+xml"}
+
+
+def _to_examples(examples: list[ApplicationExampleInput]) -> list[ApplicationExample]:
+    return [ApplicationExample(label=e.label, url=str(e.url)) for e in examples]
 
 
 def _to_response(app: Application) -> ApplicationResponse:
@@ -41,6 +47,9 @@ def _to_response(app: Application) -> ApplicationResponse:
         url=app.url,
         icon=app.icon,
         image=image,
+        examples=[
+            ApplicationExampleResponse(label=e.label, url=e.url) for e in app.examples
+        ],
     )
 
 
@@ -73,7 +82,7 @@ async def create_application(
             description=data.description,
             url=data.url,
             icon=data.icon,
-            examples=[],
+            examples=_to_examples(data.examples),
         )
     except DuplicateResourceError:
         raise HTTPException(
@@ -96,7 +105,7 @@ async def update_application(
             description=data.description,
             url=data.url,
             icon=data.icon,
-            examples=[],
+            examples=_to_examples(data.examples),
         )
     except ResourceNotFoundError:
         raise HTTPException(status_code=404, detail="Aplicação não encontrada.")
