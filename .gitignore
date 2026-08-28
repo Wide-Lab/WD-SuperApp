@@ -11,3 +11,10 @@ Thumbs.db
 
 # As dependências e os artefatos de build do frontend ficam em frontend/.gitignore,
 # ao lado do que eles ignoram.
+
+# `.env` de produção gerado por scripts/gen-prod-env.sh — contém a chave privada
+# da sessão e as senhas do Postgres/MinIO. Nunca vai para o repositório.
+/.env.prod
+
+# Imagens de capa usadas manualmente no cadastro; o lugar delas é o bucket, não o git.
+/apps/

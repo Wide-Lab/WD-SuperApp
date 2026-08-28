@@ -2,7 +2,7 @@
 
 > Documento raiz. Registra o que estamos construindo, em que ordem, e quais decisões
 > já foram tomadas — inclusive as que decidimos **não** tomar ainda.
-> Última revisão: 2026-07-10.
+> Última revisão: 2026-08-26.
 
 ## O que é
 
@@ -63,6 +63,15 @@ em que fizer falta. O detalhe é diferente — não adiciona campo nenhum ao cat
 mostra sem os cortes de espaço do grid o que o `apps.json` já tinha (descrição inteira,
 imagem sem recorte, destino do link).
 
+**O critério do parágrafo acima foi precisado em `backend/04-exemplos-da-aplicacao.md`.** O
+catálogo ganhou um campo novo — `examples`, a lista de links de material de apoio de cada
+aplicação — e isso não reabre `category`, `tags`, `status`, `featured` nem `order`. O que
+separa os dois casos: aqueles são metadado de organização da vitrine, e exigem antes uma
+decisão de taxonomia que continua adiada; `examples` é conteúdo da própria aplicação, vive
+só no `<dialog>` de detalhe e não muda ordenação, agrupamento nem filtro. A regra que vale
+daqui em diante: **nada que altere a ordenação, o agrupamento ou o filtro da vitrine entra
+sem spec própria.**
+
 **Direção visual: "bancada".** A Widelab constrói ferramentas que *rodam* — agendadores,
 RPAs, leitores de documento. A central é o índice de uma bancada de laboratório, não uma
 prateleira de produtos. Consequências concretas em `frontend/02-design-system.md` e
@@ -107,11 +116,14 @@ Implementáveis nesta ordem. Cada uma declara suas dependências.
 4. [`frontend/04-vitrine.md`](frontend/04-vitrine.md) — shell, grid, card, estados.
 5. [`frontend/05-busca.md`](frontend/05-busca.md) — filtro, `?q=`, destaque, acessibilidade.
 6. [`frontend/06-detalhe-da-aplicacao.md`](frontend/06-detalhe-da-aplicacao.md) — botão de expandir, `<dialog>` de detalhe.
+7. [`frontend/07-exemplos-da-aplicacao.md`](frontend/07-exemplos-da-aplicacao.md) — seção de exemplos no detalhe, grupo repetível no formulário.
 
 Backend (fases 2 e 3):
 
 1. [`backend/01-fundacao.md`](backend/01-fundacao.md) — scaffold FastAPI, estrutura de módulo, Postgres async.
 2. [`backend/02-auth.md`](backend/02-auth.md) — sessão via JWT, cookie compartilhado, contrato para os outros apps.
+3. [`backend/03-integracao-dos-apps.md`](backend/03-integracao-dos-apps.md) — o lado de quem consome a sessão, módulo `central_auth` de referência.
+4. [`backend/04-exemplos-da-aplicacao.md`](backend/04-exemplos-da-aplicacao.md) — `T003_APPLICATION_EXAMPLES`, campo `examples` no contrato de `/api/apps`.
 
 O catálogo via `GET /api/apps` (fase 2) ainda não tem spec própria — entra como módulo
 `applications` seguindo a convenção de `backend/01-fundacao.md`.
